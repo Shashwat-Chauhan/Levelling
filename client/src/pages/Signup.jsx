@@ -5,11 +5,13 @@ import { useNavigate } from 'react-router-dom';
 export default function Signup() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
+
+  const [errorMsg, setErrorMsg] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -17,9 +19,10 @@ export default function Signup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMsg(''); // Clear previous errors
 
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match.");
+      setErrorMsg("Passwords do not match.");
       return;
     }
 
@@ -34,12 +37,12 @@ export default function Signup() {
         console.log('Signup Success');
         navigate("/dashboard");
       } else {
-        console.log('Signup failed:', res.data);
-        alert('Signup failed');
+        setErrorMsg(res.data.message || 'Signup failed');
       }
     } catch (error) {
-      console.error('Signup error:', error.response?.data || error.message);
-      alert(error.response?.data?.message || "Something went wrong during signup.");
+      const message = error.response?.data?.message || "Something went wrong during signup.";
+      console.error('Signup error:', message);
+      setErrorMsg(message);
     }
   };
 
@@ -47,6 +50,9 @@ export default function Signup() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center px-4">
       <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 md:p-10 w-full max-w-md shadow-2xl border border-white/20">
         <h2 className="text-3xl font-bold text-white mb-6 text-center">Create an Account</h2>
+        {errorMsg && (
+          <div className="mb-4 text-red-500 text-sm text-center">{errorMsg}</div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-5">
           <input
             type="text"
@@ -88,10 +94,10 @@ export default function Signup() {
           </button>
         </form>
         <p className="text-sm text-gray-400 text-center mt-6">
-          Already have an account?{" "}
+          Already have an account?{' '}
           <span
             className="text-purple-400 cursor-pointer hover:underline"
-            onClick={() => navigate("/login")}
+            onClick={() => navigate('/login')}
           >
             Log in
           </span>
