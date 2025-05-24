@@ -24,7 +24,7 @@ export default function Signup() {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/user/signup", {
+      const res = await axios.post("https://levelling-production.up.railway.app/user/signup", {
         username: formData.name,
         email: formData.email,
         password: formData.password,

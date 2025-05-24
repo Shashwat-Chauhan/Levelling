@@ -14,7 +14,7 @@ export default function Dashboard() {
 
   const fetchTasks = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/task/${userId}`);
+      const res = await axios.get(`https://levelling-production.up.railway.app/task/${userId}`);
       setTasks(res.data);
     } catch (err) {
       console.error('Failed to fetch tasks:', err);
@@ -24,7 +24,7 @@ export default function Dashboard() {
   const addTask = async () => {
     if (!title.trim()) return;
     try {
-      await axios.post('http://localhost:5000/task', { userId, title });
+      await axios.post('https://levelling-production.up.railway.app/task', { userId, title });
       setTitle('');
       fetchTasks();
     } catch (err) {
@@ -34,7 +34,7 @@ export default function Dashboard() {
 
   const updateTime = async (taskId, seconds) => {
     try {
-      await axios.patch(`http://localhost:5000/task/${taskId}`, { secondsWorked: seconds });
+      await axios.patch(`https://levelling-production.up.railway.app/task/${taskId}`, { secondsWorked: seconds });
       fetchTasks();
     } catch (err) {
       console.error('Failed to update time:', err);
@@ -44,7 +44,7 @@ export default function Dashboard() {
   const updateTaskTitle = async (taskId) => {
     if (!editedTitle.trim()) return;
     try {
-      await axios.patch(`http://localhost:5000/task/${taskId}`, { title: editedTitle });
+      await axios.patch(`https://levelling-production.up.railway.app/task/${taskId}`, { title: editedTitle });
       setEditingTaskId(null);
       setEditedTitle('');
       fetchTasks();
@@ -58,7 +58,7 @@ export default function Dashboard() {
     if (!confirmed) return;
 
     try {
-      await axios.delete(`http://localhost:5000/task/${taskId}`);
+      await axios.delete(`https://levelling-production.up.railway.app/task/${taskId}`);
       fetchTasks();
     } catch (err) {
       console.error('Failed to delete task:', err);
