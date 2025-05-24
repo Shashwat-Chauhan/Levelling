@@ -32,11 +32,15 @@ export default function Signup() {
         email: formData.email,
         password: formData.password,
       });
-
-      if (res.status === 200 || res.status === 201) {
-        console.log('Signup Success');
+      if (res.status === 200 || res.status === 201 ) {
+        
+        const {token , userId} = res.data
+        // Optional: store token
+        // localStorage.setItem("token", res.data.token);
+        localStorage.setItem("userId", userId);
+        localStorage.setItem("token", token);
         navigate("/dashboard");
-      } else {
+      }else {
         setErrorMsg(res.data.message || 'Signup failed');
       }
     } catch (error) {
