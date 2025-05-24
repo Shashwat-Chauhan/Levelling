@@ -26,15 +26,22 @@ router.post('/', async (req, res) => {
 
 router.patch('/:taskId', async (req, res) => {
   try {
-    const { secondsWorked } = req.body;
-    if (typeof secondsWorked !== 'number') return res.status(400).json({ message: 'Invalid secondsWorked' });
+    const { secondsWorked, title } = req.body;
 
     const task = await Task.findById(req.params.taskId);
     if (!task) return res.status(404).json({ message: 'Task not found' });
 
-    task.totalTimeWorked += secondsWorked;
-    await task.save();
+    // Update title if provided
+    if (typeof title === 'string') {
+      task.title = title.trim();
+    }
 
+    // Update time worked if provided
+    if (typeof secondsWorked === 'number') {
+      task.totalTimeWorked += secondsWorked;
+    }
+
+    await task.save();
     res.json(task);
   } catch (err) {
     res.status(500).json({ message: err.message });
