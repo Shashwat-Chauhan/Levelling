@@ -16,6 +16,6 @@ app.use(express.json());
 app.use('/user', userRoutes);
 app.use('/task', taskRoutes);
 
-app.listen(5000, () => {
+app.listen(process.env.PORT || 5050, () => {
   console.log("🚀 Server is running on port 5000");
 });
