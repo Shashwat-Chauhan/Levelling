@@ -1,67 +1,105 @@
-import React, { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
-import TotalTime from '../components/TotalTime'; // Adjust the path if needed
+import React, { useEffect, useState, useRef } from "react";
+import axios from "axios";
+import TotalTime from "../components/TotalTime"; // Adjust the path if needed
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState("");
   const [activeTimers, setActiveTimers] = useState({});
   const [sessionTimers, setSessionTimers] = useState({});
   const [editingTaskId, setEditingTaskId] = useState(null);
-  const [editedTitle, setEditedTitle] = useState('');
+  const [editedTitle, setEditedTitle] = useState("");
   const intervalRefs = useRef({});
-  const userId = localStorage.getItem('userId');
+  const userId = localStorage.getItem("userId");
+  const [activeCount, setActiveCount] = useState(0);
+
+  // Global timer states
+  const [globalTimerRunning, setGlobalTimerRunning] = useState(false);
+  const [globalElapsed, setGlobalElapsed] = useState(0);
+  const globalIntervalRef = useRef(null);
 
   const fetchTasks = async () => {
     try {
-      const res = await axios.get(`https://levelling-production.up.railway.app/task/${userId}`);
+      const res = await axios.get(
+        `https://levelling-production.up.railway.app/task/${userId}`
+      );
       setTasks(res.data);
     } catch (err) {
-      console.error('Failed to fetch tasks:', err);
+      console.error("Failed to fetch tasks:", err);
     }
   };
 
   const addTask = async () => {
     if (!title.trim()) return;
     try {
-      await axios.post('https://levelling-production.up.railway.app/task', { userId, title });
-      setTitle('');
+      await axios.post("https://levelling-production.up.railway.app/task", {
+        userId,
+        title,
+      });
+      setTitle("");
       fetchTasks();
     } catch (err) {
-      console.error('Failed to add task:', err);
+      console.error("Failed to add task:", err);
     }
   };
 
   const updateTime = async (taskId, seconds) => {
     try {
-      await axios.patch(`https://levelling-production.up.railway.app/task/${taskId}`, { secondsWorked: seconds });
+      await axios.patch(
+        `https://levelling-production.up.railway.app/task/${taskId}`,
+        { secondsWorked: seconds }
+      );
       fetchTasks();
     } catch (err) {
-      console.error('Failed to update time:', err);
+      console.error("Failed to update time:", err);
     }
   };
 
   const updateTaskTitle = async (taskId) => {
     if (!editedTitle.trim()) return;
     try {
-      await axios.patch(`https://levelling-production.up.railway.app/task/${taskId}`, { title: editedTitle });
+      await axios.patch(
+        `https://levelling-production.up.railway.app/task/${taskId}`,
+        { title: editedTitle }
+      );
       setEditingTaskId(null);
-      setEditedTitle('');
+      setEditedTitle("");
       fetchTasks();
     } catch (err) {
-      console.error('Failed to update task title:', err);
+      console.error("Failed to update task title:", err);
     }
   };
 
   const deleteTask = async (taskId) => {
-    const confirmed = window.confirm('Are you sure you want to delete this task?');
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this task?"
+    );
     if (!confirmed) return;
 
     try {
-      await axios.delete(`https://levelling-production.up.railway.app/task/${taskId}`);
+      await axios.delete(
+        `https://levelling-production.up.railway.app/task/${taskId}`
+      );
       fetchTasks();
     } catch (err) {
-      console.error('Failed to delete task:', err);
+      console.error("Failed to delete task:", err);
+    }
+  };
+
+  const startGlobalTimer = () => {
+    setGlobalTimerRunning(true);
+    if (!globalIntervalRef.current) {
+      globalIntervalRef.current = setInterval(() => {
+        setGlobalElapsed((prev) => prev + 1);
+      }, 1000);
+    }
+  };
+
+  const stopGlobalTimer = () => {
+    setGlobalTimerRunning(false);
+    if (globalIntervalRef.current) {
+      clearInterval(globalIntervalRef.current);
+      globalIntervalRef.current = null;
     }
   };
 
@@ -78,12 +116,17 @@ export default function Dashboard() {
 
       setTasks((prev) =>
         prev.map((task) =>
-          task._id === taskId ? { ...task, totalTimeWorked: task.totalTimeWorked + 1 } : task
+          task._id === taskId
+            ? { ...task, totalTimeWorked: task.totalTimeWorked + 1 }
+            : task
         )
       );
     }, 1000);
 
     setActiveTimers((prev) => ({ ...prev, [taskId]: true }));
+
+    // Increase count of active timers
+    setActiveCount((count) => count + 1);
   };
 
   const stopTimer = (taskId) => {
@@ -108,6 +151,9 @@ export default function Dashboard() {
         delete updated[taskId];
         return updated;
       });
+
+      // Decrease count of active timers
+      setActiveCount((count) => Math.max(count - 1, 0));
     }
   };
 
@@ -116,6 +162,9 @@ export default function Dashboard() {
 
     return () => {
       Object.values(intervalRefs.current).forEach(clearInterval);
+      if (globalIntervalRef.current) {
+        clearInterval(globalIntervalRef.current);
+      }
     };
   }, []);
 
@@ -124,6 +173,27 @@ export default function Dashboard() {
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
 
       <TotalTime tasks={tasks} />
+
+      {/* Global Timer Display and Controls */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">
+          Global Timer: {Math.floor(globalElapsed / 60)}m {globalElapsed % 60}s
+        </h2>
+        <button
+          onClick={startGlobalTimer}
+          disabled={globalTimerRunning}
+          className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 mr-2 disabled:opacity-50"
+        >
+          Start Global Timer
+        </button>
+        <button
+          onClick={stopGlobalTimer}
+          disabled={!globalTimerRunning}
+          className="px-4 py-2 bg-red-600 rounded hover:bg-red-700 disabled:opacity-50"
+        >
+          Stop Global Timer
+        </button>
+      </div>
 
       <div className="flex gap-4 mb-6">
         <input
@@ -163,7 +233,7 @@ export default function Dashboard() {
                   <button
                     onClick={() => {
                       setEditingTaskId(null);
-                      setEditedTitle('');
+                      setEditedTitle("");
                     }}
                     className="bg-gray-600 px-3 py-1 rounded hover:bg-gray-700"
                   >
@@ -174,7 +244,7 @@ export default function Dashboard() {
                 <>
                   <h2 className="text-xl font-semibold">{task.title}</h2>
                   <p className="text-gray-400">
-                    Time Worked: {Math.floor(task.totalTimeWorked / 60)}m{' '}
+                    Time Worked: {Math.floor(task.totalTimeWorked / 60)}m{" "}
                     {task.totalTimeWorked % 60}s
                   </p>
                 </>
@@ -186,8 +256,8 @@ export default function Dashboard() {
                 disabled={!!activeTimers[task._id]}
                 className={`px-4 py-2 rounded ${
                   activeTimers[task._id]
-                    ? 'bg-gray-600 cursor-not-allowed'
-                    : 'bg-green-600 hover:bg-green-700'
+                    ? "bg-gray-600 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700"
                 }`}
               >
                 Start
@@ -197,8 +267,8 @@ export default function Dashboard() {
                 disabled={!activeTimers[task._id]}
                 className={`px-4 py-2 rounded ${
                   !activeTimers[task._id]
-                    ? 'bg-gray-600 cursor-not-allowed'
-                    : 'bg-red-600 hover:bg-red-700'
+                    ? "bg-gray-600 cursor-not-allowed"
+                    : "bg-red-600 hover:bg-red-700"
                 }`}
               >
                 Stop

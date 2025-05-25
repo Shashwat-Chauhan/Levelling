@@ -1,21 +1,24 @@
-import express from 'express';
-import { Task } from '../models.js';
+import express from "express";
+import { Task } from "../models.js";
 
 const router = express.Router();
 
-router.get('/:userId', async (req, res) => {
+router.get("/:userId", async (req, res) => {
   try {
-    const tasks = await Task.find({ userId: req.params.userId }).sort({ createdAt: -1 });
+    const tasks = await Task.find({ userId: req.params.userId }).sort({
+      createdAt: -1,
+    });
     res.json(tasks);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { userId, title } = req.body;
-    if (!userId || !title) return res.status(400).json({ message: 'userId and title required' });
+    if (!userId || !title)
+      return res.status(400).json({ message: "userId and title required" });
 
     const task = await Task.create({ userId, title });
     res.status(201).json(task);
@@ -24,20 +27,22 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.patch('/:taskId', async (req, res) => {
+router.patch("/:taskId", async (req, res) => {
+ 
+
   try {
     const { secondsWorked, title } = req.body;
 
     const task = await Task.findById(req.params.taskId);
-    if (!task) return res.status(404).json({ message: 'Task not found' });
+    if (!task) return res.status(404).json({ message: "Task not found" });
 
     // Update title if provided
-    if (typeof title === 'string') {
+    if (typeof title === "string") {
       task.title = title.trim();
     }
 
     // Update time worked if provided
-    if (typeof secondsWorked === 'number') {
+    if (typeof secondsWorked === "number") {
       task.totalTimeWorked += secondsWorked;
     }
 
@@ -48,7 +53,7 @@ router.patch('/:taskId', async (req, res) => {
   }
 });
 
-router.delete('/:taskId', async (req, res) => {
+router.delete("/:taskId", async (req, res) => {
   try {
     await Task.findByIdAndDelete(req.params.taskId);
     res.status(204).send();
